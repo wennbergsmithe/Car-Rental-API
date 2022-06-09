@@ -3,13 +3,13 @@
     "version": "1.0.0",
     "private": true,
     "description": "Smartcar API coding challenge",
-    "main": "index.js",
+    "main": "src/app.js",
     "engines": {
         "node": "11.x"
     },
     "scripts": {
-        "start": "node index.js",
-        "start:dev": "nodemon index.js",
+        "start": "node src/app.js",
+        "start:dev": "nodemon app.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
