@@ -1,4 +1,4 @@
-const {getVehicle,getDriver,addVehicle,addDriver} = require('./executor')
+const {getVehicle,getDriver,addVehicle,addDriver,createTrip} = require('./lib')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -25,7 +25,11 @@ app
 app
     .route('/drivers')
     .post(addDriver)
-    
+
+app
+    .route('/trips')
+    .post(createTrip)
+
 app.listen(3002, () => {
     console.log(`Server listening`)
 })
