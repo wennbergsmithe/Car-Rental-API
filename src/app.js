@@ -1,4 +1,4 @@
-const {getVehicle,getDriver,addVehicle,addDriver,createTrip, getTrip,getManyTrips} = require('./lib')
+const {getVehicleCommand,getDriverCommand,addVehicleCommand,addDriverCommand,createTripCommand, getTripCommand,getManyTripsCommand,updateTripCommand }= require('./commands')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -13,29 +13,34 @@ app.use(cors())
 //GET routes
 app
     .route('/vehicles/:id')
-    .get(getVehicle)
+    .get(getVehicleCommand)
 app
     .route('/drivers/:id')
-    .get(getDriver)
+    .get(getDriverCommand)
 
 app
     .route('/trips/:id')
-    .get(getTrip)
+    .get(getTripCommand)
 app
-    .route('/trips?status=active|inactive')
-    .get(getManyTrips)
+    .route('/trips/:status?')
+    .get(getManyTripsCommand)
 
 //POST routes
 app
     .route('/vehicles')
-    .post(addVehicle)
+    .post(addVehicleCommand)
 app
     .route('/drivers')
-    .post(addDriver)
+    .post(addDriverCommand)
 
 app
     .route('/trips')
-    .post(createTrip)
+    .post(createTripCommand)
+
+//PUT routes
+app
+    .route('/trips')
+    .put(updateTripCommand)
 
 app.listen(3002, () => {
     console.log(`Server listening`)

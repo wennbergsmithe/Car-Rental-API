@@ -1,3 +1,4 @@
+const { query } = require('express');
 const res = require('express/lib/response');
 const { keepalives } = require('pg/lib/defaults')
 const { pool } = require('./config')
@@ -8,176 +9,174 @@ class BadRequestError extends Error {
     }
 }
 
-async function getVehicle(request, response) {
-    console.log(request.params)
-    const id = request.params.id
-    try {
-        const results = await pool.query('SELECT id,make FROM Vehicle WHERE id = $1', [id])
+async function getVehicle(id,requiresInUse=false){
+    const results = await pool.query('SELECT id,make FROM Vehicle WHERE id = $1', [id])
         if (results.rowCount === 0) {
             throw new BadRequestError(`no vehicle with id ${id}`, 404)
+        }if(requiresInUse && results.in_use){
+            throw new BadRequestError(`vehicle ${id} is not available for rental`)
         }
-        return response.status(200).json(results.rows[0])
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
-    }
+        return results.rows[0]
 }
-async function getDriver(request, response) {
-    console.log(request.params)
-    const id = request.params.id
-    try {
-        const results = await pool.query('SELECT id,name FROM Driver WHERE id = $1', [id])
-        if (results.rowCount === 0) {
-            throw new BadRequestError(`no driver with id ${id}`)
+
+async function getDriver(id) {
+    const results = await pool.query('SELECT id,name FROM Driver WHERE id = $1', [id])
+    if (results.rowCount === 0) {
+        throw new BadRequestError(`no driver with id ${id}`)
+    }
+    return results.rows[0]
+}
+
+async function getTrip(id) {
+    const results = await pool.query(
+        'SELECT t.*, d.name, v.make , v.model FROM Trip t JOIN Vehicle v ON t.vehicle = v.id JOIN Driver d ON t.driver = d.id WHERE t.id = $1',
+        [id]
+    )
+    if (results.rowCount === 0) {
+        throw new BadRequestError(`no trip with id ${id}`, 404)
+    } else {
+        return {
+            id: results.rows[0].id,
+            status: results.rows[0].status,
+            startedAt: results.rows[0].started_at,
+            expectedReturn: results.rows[0].expected_return,
+            driver: {
+                driverId: results.rows[0].driver,
+                driverName: results.rows[0].name
+            },
+            vehicle: {
+                vehicleId: results.rows[0].vehicle,
+                make: results.rows[0].make,
+                model: results.rows[0].model
+            }
         }
-        return response.status(200).json(results.rows[0])
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
     }
 }
 
-async function getTrip(request, response) {
-    console.log(request.params)
-    const id = request.params.id
-
-    try {
-        const results = await pool.query(
-            'SELECT t.*, d.name, v.make , v.model FROM Trip t JOIN Vehicle v ON t.vehicle = v.id JOIN Driver d ON t.driver = d.id WHERE t.id = $1',
-            [id]
-        )
-        if (results.rowCount === 0) {
-            throw new BadRequestError(`no trip with id ${id}`,404)
-        } else {
-            return response.status(200).json(
+async function getManyTrips(status) {
+    if (status != 'active' && status != 'inactive') {
+        throw new BadRequestError(`status must be active or inactive`)
+    }
+    const results = await pool.query(
+        `SELECT t.*, d.name, v.make , v.model FROM Trip t JOIN Vehicle v ON t.vehicle = v.id JOIN Driver d ON t.driver = d.id WHERE t.status = $1`,
+        [status]
+    )
+    if (results.rowCount === 0) {
+        throw new BadRequestError(`there are no trips!`, 404)
+    } else {
+        let trips = []
+        results.rows.map((result) => {
+            trips.push(
                 {
-                    id: results.rows[0].id,
-                    status: results.rows[0].status,
-                    startedAt: results.rows[0].startedAt,
-                    expectedReturn: results.rows[0].expectedReturn,
+                    id: result.id,
+                    status: result.status,
+                    startedAt: Date(result.started_at),
+                    expectedReturn: Date(result.expected_return),
                     driver: {
-                        driverId: results.rows[0].driver,
-                        driverName: results.rows[0].name
+                        driverId: result.driver,
+                        driverName: result.name
                     },
                     vehicle: {
-                        vehicleId: results.rows[0].vehicle,
-                        make: results.rows[0].make,
-                        model: results.rows[0].model
+                        vehicleId: result.vehicle,
+                        make: result.make,
+                        model: result.model
                     }
                 }
             )
-        }
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
+        })
+        return trips
     }
 }
 
-async function getManyTrips(request,response) {
-    console.log(request.params)
-    const status = request.params.status
+async function addVehicle(make, model, year, mileage, vin, in_use) {
+    const results = await pool.query(
+        'INSERT INTO Vehicle (make, model, year, mileage, vin, in_use) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+        [make, model, year, mileage, vin, in_use]
+    )
+    return {
+        id: results.rows[0].id,
+        make, model, year, mileage, vin, in_use }
+}
+
+async function addDriver(name, licenseNumber, phoneNumber) {
+    const results = await pool.query(
+        'INSERT INTO Driver (name, license_number, phone_number) VALUES ($1,$2,$3) RETURNING id',
+        [name, licenseNumber, phoneNumber]
+    )
+    return { id: results.rows[0].id, name }
+}
+
+async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
+    let driver, vehicle
 
     try{
-        const results = await pool.query(
-            'SELECT t.*, d.name, v.make , v.model FROM Trip t JOIN Vehicle v ON t.vehicle = v.id JOIN Driver d ON t.driver = d.id WHERE t.status = $1',
-            [status]
-        )
-        if(results.rowCount === 0){
-            throw new BadRequestError(`there are no trips!`,404)
-        }else{
-            let trips = []
-            results.rows.forEach(trip => {
-                trips.push(
-                    {
-                        id: trip.id,
-                        status: trip.status,
-                        startedAt: trip.startedAt,
-                        expectedReturn: trip.expectedReturn,
-                        driver: {
-                            driverId: trip.driver,
-                            driverName: trip.name
-                        },
-                        vehicle: {
-                            vehicleId: trip.vehicle,
-                            make: trip.make,
-                            model: trip.model
-                        }
-                    }
-                )
-            })            
+        driver = await getDriver(driverId);
+        vehicle = await getVehicle(vehicleId)
+    }catch(e){
+        throw e //pass error on to command
+    }
+    const results = await pool.query('INSERT INTO Trip (status,started_at, expected_return, driver, vehicle) VALUES ($1,$2,$3,$4,$5) RETURNING *', ['active', startedAt, expectedReturn, driverId, vehicleId])
+    if (results.rowCount === 0) {
+        throw new BadRequestError(`driver ${driverId} does not exist`)
+    } else {
+        await pool.query('UPDATE Vehicle SET in_use = TRUE WHERE id = $1', [vehicleId])
+        return{ id: results.rows[0].id, status: results.rows[0].status, startedAt, expectedReturn, driver, vehicle }
+    }
+   
+}
+
+
+async function updateTrip(tripId, status, expectedReturn) {
+    let driver,vehicle
+    
+    if (!tripId) {
+        throw new BadRequestError('tripId is required')
+    }
+    if (status != 'active' && status != 'inactive' && status != undefined) {
+        throw new BadRequestError('status must be active or inactive')
+    }
+    const results = await pool.query(
+        'SELECT id FROM Trip WHERE id = $1',
+        [tripId]
+    )
+    if (results.rowCount === 0) {
+        throw new BadRequestError(`trip id ${tripId} does not exist`, 404)
+    } else {
+        let tripQuery = 'UPDATE Trip SET '
+        if (status) {
+            tripQuery += `status = '${status}'` //prior string validation ensures there is no sql injection vulnerabilities
         }
-    }catch(err){
-        return response.status(err.code).json({ status: err.code, message: err.message })
-    }
-
-}
-
-async function addVehicle(request, response) {
-    console.log(request.body)
-    const { make, model, year, mileage, vin, in_use } = request.body
-    try {
-        const results = await pool.query(
-            'INSERT INTO Vehicle (make, model, year, mileage, vin, in_use) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-            [make, model, year, mileage, vin, in_use]
-        )
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
-    }
-
-}
-async function addDriver(request, response) {
-    console.log(request.body)
-    const { name, licenseNumber, phoneNumber } = request.body
-
-    try {
-        const results = await pool.query(
-            'INSERT INTO Driver (name, license_number, phone_number) VALUES ($1,$2,$3) RETURNING id',
-            [name, licenseNumber, phoneNumber])
-        return response.status(201).json({ id: results.rows[0].id, name })
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
-    }
-}
-
-async function createTrip(request, response) {
-    console.log(request.body)
-    const { vehicleId, driverId, startedAt, expectedReturn } = request.body
-    let driver, vehicle
-    //validate
-
-    try {
-        const results = await pool.query('SELECT * FROM Vehicle WHERE id = $1', [vehicleId]);
-        if (results.rowCount === 0) {
-            throw new BadRequestError(`vehicle ${vehicleId} does not exist.`)
-        } else if (results.rows[0].in_use) {
-            throw new BadRequestError(`vehicle ${vehicleId} is not available for rental`)
+        if (status && expectedReturn) {
+            tripQuery += ', '
+        }
+        if (expectedReturn) {
+            tripQuery += ` expected_return = '${expectedReturn.replaceAll("'", "")}'`
+        }
+        tripQuery += ' WHERE id = $1 RETURNING *'
+        console.log(tripQuery)
+    
+        const tripResult = await pool.query(tripQuery, [tripId])
+        if (tripResult.rowCount === 0) {
+            throw BadRequestError(`trip id ${tripId} does not exist`, 404)
         } else {
-            vehicle = results.rows[0]
+            try{
+                driver = await getDriver(tripResult.rows[0].driver);
+                vehicle = await getVehicle(tripResult.rows[0].vehicle)
+            }catch(e){
+                throw e //pass error on to command
+            }
+            return {
+                id: tripResult.rows[0].id,
+                status: tripResult.rows[0].status,
+                startedAt: tripResult.rows[0].started_at,
+                expectedReturn: tripResult.rows[0].expected_return,
+                driver,
+                vehicle
+            }
+            
         }
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
     }
+    
 
-    try {
-        const results = await pool.query('SELECT * FROM Driver WHERE id = $1', [driverId])
-        if (results.rowCount === 0) {
-            throw new BadRequestError(`driver ${driverId} does not exist`)
-        } else {
-            driver = results.rows[0]
-        }
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
-    }
-
-    //execute
-    try {
-        const results = await pool.query('INSERT INTO Trip (status,started_at, expected_return, driver, vehicle) VALUES ($1,$2,$3,$4,$5) RETURNING *', ['active', startedAt, expectedReturn, driverId, vehicleId])
-        if (results.rowCount === 0) {
-            throw new BadRequestError(`driver ${driverId} does not exist`)
-        } else {
-            await pool.query('UPDATE Vehicle SET in_use = TRUE WHERE id = $1', [vehicleId])
-            response.status(200).json({ id: results.rows[0].id, status: results.rows[0].status, startedAt, expectedReturn, driver, vehicle })
-        }
-    } catch (err) {
-        return response.status(err.code).json({ status: err.code, message: err.message })
-    }
 }
-
-module.exports = { getDriver, getVehicle, addDriver, addVehicle, createTrip, getTrip, getManyTrips};
+module.exports = { getDriver, getVehicle, addDriver, addVehicle, createTrip, getTrip, getManyTrips, updateTrip };
