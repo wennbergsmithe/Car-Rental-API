@@ -20,6 +20,8 @@
 - `npm run unit-test`
 - `npm run int-test`
 
+### documentation
+- https://docs.google.com/document/d/1DbcRdisjvZ2ufOjahUO-vu5WAGUvgPGtGwSf4sABv3w/edit?usp=sharing
 
 # Things I would add if i had more time:
 - endpoint input validation with Joi to ensure there is no broken data coming in
