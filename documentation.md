@@ -15,6 +15,7 @@ This endpoint will return a vehicle object when supplied with a valid Id.
 `GET http://localhost:3002/vehicles:id`
 
 Sample Input:
+
 `GET http://localhost:3002/vehicles/1`
 
 Sample Output:
@@ -27,9 +28,11 @@ Sample Output:
 
 ### Get Driver By Id
 This endpoint will return a driver object when supplied with a valid Id
+
 `GET http://localhost:3002/drivers:id`
 
 Sample Input:
+
 `GET http://localhost:3002/drivers/1`
 
 Sample Output:
@@ -40,6 +43,7 @@ Sample Output:
 
 ### Create A Vehicle
 This will create a vehicle when supplied with valid input
+
 `POST http://localhost:3002/vehicles`
 
 Sample Input:
@@ -69,6 +73,7 @@ Sample Output:
 
 ### Create A Driver
 This will create a driver when supplied with valid input
+
 `POST http://localhost:3002/drivers`
 
 Sample Input:
@@ -90,6 +95,7 @@ Sample Output:
 
 ### Create a Trip
 This creates a new trip with a supplied driver and vehicle. NOTE: While a vehicle can go on multiple trips, it cannot be on more than 1 active trip at a time.
+
 `POST http://localhost:3002/trips`
 
 Sample Input:
@@ -122,9 +128,11 @@ Sample Output:
 
 ### Get A Single Trip
 This will return a trip when supplied with valid id
+
 `GET http://localhost:3002/trips:id`
 
 Sample Input:
+
 `GET http://localhost:3002/trips/1`
 
 Sample Output:
@@ -152,6 +160,7 @@ active will return all active trips and inactive will return all inactive trips.
 `GET http://localhost:3002/trips?status=active|inactive`
 
 Sample Input:
+
 `GET http://localhost:3002/trips?status=active`
 
 Sample Output:
