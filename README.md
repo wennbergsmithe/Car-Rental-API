@@ -4,8 +4,9 @@
 ### (if postgres NOT already set up start here)
 - `brew install postgresql`
 - `brew services start postgresql`
-- `psql postgres`
+
 ### (if postgres IS already set up start here)
+- `psql postgres`
 - postgres=>`CREATE ROLE sc_user WITH LOGIN PASSWORD 'password';`
 - postgres=>`ALTER ROLE sc_user CREATEDB;`
 - initialize database relations: `psql -d sc_api -U sc_user -f init.sql`
@@ -19,6 +20,8 @@
 - `npm run unit-test`
 - `npm run int-test`
 
+### documentation
+- https://docs.google.com/document/d/1DbcRdisjvZ2ufOjahUO-vu5WAGUvgPGtGwSf4sABv3w/edit?usp=sharing
 
 # Things I would add if i had more time:
 - endpoint input validation with Joi to ensure there is no broken data coming in
