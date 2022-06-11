@@ -11,6 +11,7 @@ The API operates by default on port 3002
 ## Routes
 ### Get Vehicle By Id
 This endpoint will return a vehicle object when supplied with a valid Id.
+
 `GET http://localhost:3002/vehicles:id`
 
 Sample Input:
