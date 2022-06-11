@@ -10,6 +10,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
 
+
 //GET routes
 app
     .route('/vehicles/:id')
@@ -42,6 +43,15 @@ app
     .route('/trips')
     .put(updateTripCommand)
 
-app.listen(3002, () => {
+//Listener
+const server = app.listen(3002, () => {
     console.log(`Server listening`)
 })
+
+function stop() {
+    server.close();
+}
+
+module.exports = server
+
+module.exports.stop = stop

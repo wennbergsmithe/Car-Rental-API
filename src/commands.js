@@ -3,6 +3,7 @@ const { pool } = require('./config')
 const {getVehicle,getDriver,addVehicle,addDriver,createTrip, getTrip,getManyTrips,updateTrip} = require('./lib')
 
 
+
 async function getVehicleCommand(request, response) {
     console.log(request.params)
     const id = request.params.id
@@ -46,7 +47,6 @@ async function getManyTripsCommand(request, response) {
         const trips = await getManyTrips(status)
         return response.status(201).json(trips)
     } catch (err) {
-        console.log(err)
         return response.status(err.code).json({ status: err.code, message: err.message })
     }
 

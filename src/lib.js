@@ -9,8 +9,14 @@ class BadRequestError extends Error {
     }
 }
 
+/**
+ * gets a vehicle by id 
+ * @param {*} id 
+ * @param {*} requiresInUse 
+ * @returns vehicle object
+ */
 async function getVehicle(id,requiresInUse=false){
-    const results = await pool.query('SELECT id,make FROM Vehicle WHERE id = $1', [id])
+    const results = await pool.query('SELECT id, make FROM Vehicle WHERE id = $1', [id])
         if (results.rowCount === 0) {
             throw new BadRequestError(`no vehicle with id ${id}`, 404)
         }if(requiresInUse && results.in_use){
@@ -19,6 +25,11 @@ async function getVehicle(id,requiresInUse=false){
         return results.rows[0]
 }
 
+/**
+ * gets a driver by id
+ * @param {*} id 
+ * @returns driver object
+ */
 async function getDriver(id) {
     const results = await pool.query('SELECT id,name FROM Driver WHERE id = $1', [id])
     if (results.rowCount === 0) {
@@ -27,9 +38,21 @@ async function getDriver(id) {
     return results.rows[0]
 }
 
+/**
+ * gets a trip by id
+ * @param {*} id 
+ * @returns trip object
+ */
 async function getTrip(id) {
-    const results = await pool.query(
-        'SELECT t.*, d.name, v.make , v.model FROM Trip t JOIN Vehicle v ON t.vehicle = v.id JOIN Driver d ON t.driver = d.id WHERE t.id = $1',
+    const results = await pool.query(`
+        SELECT  t.*,
+                d.name,
+                v.make,
+                v.model 
+           FROM Trip t 
+           JOIN Vehicle v ON t.vehicle = v.id
+           JOIN Driver d ON t.driver = d.id
+          WHERE t.id = $1`,
         [id]
     )
     if (results.rowCount === 0) {
@@ -53,12 +76,24 @@ async function getTrip(id) {
     }
 }
 
+/**
+ * gets all trips with given status
+ * @param {*} status 'active'|'inactive'
+ * @returns array of trip objects
+ */
 async function getManyTrips(status) {
     if (status != 'active' && status != 'inactive') {
         throw new BadRequestError(`status must be active or inactive`)
     }
-    const results = await pool.query(
-        `SELECT t.*, d.name, v.make , v.model FROM Trip t JOIN Vehicle v ON t.vehicle = v.id JOIN Driver d ON t.driver = d.id WHERE t.status = $1`,
+    const results = await pool.query(`
+        SELECT t.*,
+               d.name,
+               v.make,
+               v.model
+          FROM Trip t
+          JOIN Vehicle v ON t.vehicle = v.id
+          JOIN Driver d ON t.driver = d.id
+         WHERE t.status = $1`,
         [status]
     )
     if (results.rowCount === 0) {
@@ -88,24 +123,58 @@ async function getManyTrips(status) {
     }
 }
 
+/**
+ * adds a vehicle to the database
+ * @param {*} make 
+ * @param {*} model 
+ * @param {*} year 
+ * @param {*} mileage 
+ * @param {*} vin 
+ * @param {*} in_use 
+ * @returns vehicle object
+ */
 async function addVehicle(make, model, year, mileage, vin, in_use) {
-    const results = await pool.query(
-        'INSERT INTO Vehicle (make, model, year, mileage, vin, in_use) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+    const results = await pool.query(`
+           INSERT INTO Vehicle (make, model, year, mileage, vin, in_use)
+           VALUES ($1,$2,$3,$4,$5,$6)
+        RETURNING id`,
         [make, model, year, mileage, vin, in_use]
     )
     return {
         id: results.rows[0].id,
-        make, model, year, mileage, vin, in_use }
+        make, model, year,
+        mileage, vin, in_use
+    }
 }
 
+/**
+ * adds driver to the database 
+ * @param {*} name 
+ * @param {*} licenseNumber 
+ * @param {*} phoneNumber 
+ * @returns new driver object 
+ */
 async function addDriver(name, licenseNumber, phoneNumber) {
-    const results = await pool.query(
-        'INSERT INTO Driver (name, license_number, phone_number) VALUES ($1,$2,$3) RETURNING id',
+    const results = await pool.query(`
+           INSERT INTO Driver (name, license_number, phone_number)
+           VALUES ($1,$2,$3)
+        RETURNING id`,
         [name, licenseNumber, phoneNumber]
     )
-    return { id: results.rows[0].id, name }
+    return {
+        id: results.rows[0].id,
+        name
+    }
 }
 
+/**
+ * creates a new trip in the db and connects it to a driver and vehicle
+ * @param {*} vehicleId 
+ * @param {*} driverId 
+ * @param {*} startedAt 
+ * @param {*} expectedReturn 
+ * @returns trip object 
+ */
 async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
     let driver, vehicle
 
@@ -115,7 +184,11 @@ async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
     }catch(e){
         throw e //pass error on to command
     }
-    const results = await pool.query('INSERT INTO Trip (status,started_at, expected_return, driver, vehicle) VALUES ($1,$2,$3,$4,$5) RETURNING *', ['active', startedAt, expectedReturn, driverId, vehicleId])
+    const results = await pool.query(`
+           INSERT INTO Trip (status,started_at, expected_return, driver, vehicle)
+           VALUES ($1,$2,$3,$4,$5)
+        RETURNING *`,
+        ['active', startedAt, expectedReturn, driverId, vehicleId])
     if (results.rowCount === 0) {
         throw new BadRequestError(`driver ${driverId} does not exist`)
     } else {
@@ -125,8 +198,14 @@ async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
    
 }
 
-
-async function updateTrip(tripId, status, expectedReturn) {
+/**
+ * updates trip status or expected return date
+ * @param {*} tripId 
+ * @param {*} status 
+ * @param {*} expectedReturn 
+ * @returns updated trip object
+ */
+async function updateTrip(tripId, status=undefined, expectedReturn=undefined) {
     let driver,vehicle
     
     if (!tripId) {
@@ -153,7 +232,6 @@ async function updateTrip(tripId, status, expectedReturn) {
             tripQuery += ` expected_return = '${expectedReturn.replaceAll("'", "")}'`
         }
         tripQuery += ' WHERE id = $1 RETURNING *'
-        console.log(tripQuery)
     
         const tripResult = await pool.query(tripQuery, [tripId])
         if (tripResult.rowCount === 0) {

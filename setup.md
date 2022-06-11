@@ -7,7 +7,7 @@ ALTER ROLE api_user CREATEDB;
 
 psql -f /init.sql
 
-npm i cors dotenv express pg
+npm i cors dotenv express pg mocha chai chai-http
 npm i -D nodemon
 
 npm start
