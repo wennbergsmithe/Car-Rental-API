@@ -1,10 +1,10 @@
 # Setup Environment (mac)
 
-##(if postgres NOT already set up start here)
+## (if postgres NOT already set up start here)
 - brew install postgresql
 - brew services start postgresql
 - psql postgres
-##(if postgres IS already set up start here)
+## (if postgres IS already set up start here)
 - postgres=>CREATE ROLE sc_user WITH LOGIN PASSWORD 'password';
 - ALTER ROLE sc_user CREATEDB;
 
