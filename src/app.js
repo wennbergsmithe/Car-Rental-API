@@ -1,4 +1,4 @@
-const {getVehicle,getDriver,addVehicle,addDriver,createTrip} = require('./lib')
+const {getVehicle,getDriver,addVehicle,addDriver,createTrip, getTrip,getManyTrips} = require('./lib')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -17,6 +17,13 @@ app
 app
     .route('/drivers/:id')
     .get(getDriver)
+
+app
+    .route('/trips/:id')
+    .get(getTrip)
+app
+    .route('/trips?status=active|inactive')
+    .get(getManyTrips)
 
 //POST routes
 app
