@@ -40,8 +40,8 @@ async function getTripCommand(request, response) {
 }
 
 async function getManyTripsCommand(request, response) {
-    console.log(request.params)
-    const status = 'active'//request.params.status
+    console.log(request.query)
+    const status = request.query.status
 
     try {
         const trips = await getManyTrips(status)

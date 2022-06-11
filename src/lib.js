@@ -97,7 +97,7 @@ async function getManyTrips(status) {
         [status]
     )
     if (results.rowCount === 0) {
-        throw new BadRequestError(`there are no trips!`, 404)
+        throw new BadRequestError(`there are no ${status} trips!`, 404)
     } else {
         let trips = []
         results.rows.map((result) => {
