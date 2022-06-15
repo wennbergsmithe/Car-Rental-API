@@ -4,8 +4,8 @@
 ### (if postgres NOT already set up start here)
 - `brew install postgresql`
 - `brew services start postgresql`
-- `psql postgres`
 ### (if postgres IS already set up start here)
+- `psql postgres`
 - postgres=>`CREATE ROLE sc_user WITH LOGIN PASSWORD 'password';`
 - postgres=>`ALTER ROLE sc_user CREATEDB;`
 - postgres=>`CREATE DATABASE sc_api`
