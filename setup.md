@@ -7,7 +7,9 @@
 ### (if postgres IS already set up start here)
 - postgres=>`CREATE ROLE sc_user WITH LOGIN PASSWORD 'password';`
 - postgres=>`ALTER ROLE sc_user CREATEDB;`
-- initialize database relations: `psql -d sc_api -U sc_user -f init.sql`
+- postgres=>`CREATE DATABASE sc_api`
+- postgres=>`\q`
+- initialize new relations: `psql -d sc_api -U sc_user -f init.sql`
 - install dependenceis `npm i cors dotenv express pg mocha chai chai-http`
 - `npm i -D nodemon`
 
