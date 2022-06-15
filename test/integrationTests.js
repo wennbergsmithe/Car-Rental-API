@@ -33,12 +33,9 @@ describe("/drivers", () => {
 	})
 })
 describe("PUT /trips",()=>{
-	before(async()=>{
-		const {driverId} = addDriver("Ricky Bobby",123,1232322)
-		const {vehicleId} = addVehicle("Ford","Racecar",2009,500,1234,false)
-		const trip = createTrip(vehicleId, driverId,'2022-02-01','2022-03-01')
-	})
+
     it("should return status code 200",async()=>{
+		
         let res = await chai
         	.request(app)
         	.put('/trips')
