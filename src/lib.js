@@ -179,7 +179,7 @@ async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
     let driver, vehicle
 
     try{
-        drivers = await getDriver(driverId);
+        driver = await getDriver(driverId);
         vehicle = await getVehicle(vehicleId,true)
     }catch(e){
         throw e //pass error on to command
