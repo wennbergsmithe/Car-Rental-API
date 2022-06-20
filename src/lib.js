@@ -16,10 +16,10 @@ class BadRequestError extends Error {
  * @returns vehicle object
  */
 async function getVehicle(id,requiresInUse=false){
-    const results = await pool.query('SELECT id, make FROM Vehicle WHERE id = $1', [id])
+    const results = await pool.query('SELECT id, make, in_use FROM Vehicle WHERE id = $1', [id])
         if (results.rowCount === 0) {
             throw new BadRequestError(`no vehicle with id ${id}`, 404)
-        }if(requiresInUse && results.in_use){
+        }if(requiresInUse && results.rows[0].in_use){
             throw new BadRequestError(`vehicle ${id} is not available for rental`)
         }
         return results.rows[0]
@@ -180,7 +180,7 @@ async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
 
     try{
         driver = await getDriver(driverId);
-        vehicle = await getVehicle(vehicleId)
+        vehicle = await getVehicle(vehicleId,true)
     }catch(e){
         throw e //pass error on to command
     }
@@ -190,7 +190,7 @@ async function createTrip(vehicleId, driverId, startedAt, expectedReturn) {
         RETURNING *`,
         ['active', startedAt, expectedReturn, driverId, vehicleId])
     if (results.rowCount === 0) {
-        throw new BadRequestError(`driver ${driverId} does not exist`)
+        throw new BadRequestError(`Unknown SQL Error`,500)
     } else {
         await pool.query('UPDATE Vehicle SET in_use = TRUE WHERE id = $1', [vehicleId])
         return{ id: results.rows[0].id, status: results.rows[0].status, startedAt, expectedReturn, driver, vehicle }
@@ -240,6 +240,9 @@ async function updateTrip(tripId, status=undefined, expectedReturn=undefined) {
             try{
                 driver = await getDriver(tripResult.rows[0].driver);
                 vehicle = await getVehicle(tripResult.rows[0].vehicle)
+                if(status === 'inactive'){ // only set in_use to false if we are updating the status to inactive
+                    await pool.query(`UPDATE Vehicle SET in_use = 'FALSE' WHERE id = $1`, [vehicle.id])
+                }
             }catch(e){
                 throw e //pass error on to command
             }

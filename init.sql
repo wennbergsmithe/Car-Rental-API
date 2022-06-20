@@ -5,8 +5,8 @@ CREATE TABLE Vehicle (
     year VARCHAR(255) NOT NULL,
     mileage INTEGER NOT NULL,
     vin VARCHAR(255),
-    CONSTRAINT mileage CHECK (mileage >= 0),
-    in_use BOOLEAN DEFAULT FALSE
+    in_use BOOLEAN DEFAULT FALSE,
+    CONSTRAINT mileage CHECK (mileage >= 0)
 );
 
 CREATE TABLE Driver (
@@ -29,3 +29,8 @@ CREATE TABLE Trip (
     CONSTRAINT fk_driver FOREIGN KEY(driver) REFERENCES Driver(id),
     CONSTRAINT fk_vehicle FOREIGN KEY(vehicle) REFERENCES Vehicle(id)
 );
+
+-- starter data
+INSERT INTO Driver (name,license_number,phone_number) VALUES ('Ricky Bobby', 10203040, 4151929543);
+INSERT INTO Vehicle (make,model,year,mileage,vin,in_use) VALUES ('Ford','Racecar',2009,500,'302D0V820K3',FALSE);
+INSERT INTO Trip (status, started_at,expected_return,driver,vehicle) VALUES ('active','2022-01-01', '2022-01-15',1,1);
