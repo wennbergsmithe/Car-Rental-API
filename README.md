@@ -1,4 +1,4 @@
-# smartcar-coding-challenge
+# Car Rental API
 # Setup Environment (mac)
 
 ### (if postgres NOT already set up start here)
