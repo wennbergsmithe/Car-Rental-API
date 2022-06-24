@@ -21,7 +21,3 @@
 - `npm run int-test`
 ### usage documentation
 - documentation.md
-# Things I would add if i had more time:
-- endpoint input validation with Joi to ensure there is no broken data coming in
-- more integration tests that cover all the routes and assert on more than just the status codes
-- more unit tests
